@@ -2,16 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+/* Opcional: un pequeño reset para que quede bonito */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
 }
 
-.animate-fadeIn {
-    animation: fadeIn 1s ease-in;
+#root {
+    height: 100%;
 }
