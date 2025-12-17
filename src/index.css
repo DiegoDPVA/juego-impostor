@@ -2,14 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Opcional: un pequeño reset para que quede bonito */
 html,
-body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-}
-
+body,
 #root {
     height: 100%;
+    margin: 0;
 }
