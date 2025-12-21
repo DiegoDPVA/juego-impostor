@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Copy, Check, Crown, AlertCircle, Share2, Wifi, WifiOff } from 'lucide-react';
+import { database } from './firebase';
+import { ref, set, get, onValue, update } from 'firebase/database';
 
 const CATEGORIES = {
     'Animales': ['Perro', 'Gato', 'León', 'Tigre', 'Elefante', 'Jirafa', 'Mono', 'Cebra', 'Hipopótamo', 'Rinoceronte', 'Oso', 'Lobo', 'Zorro', 'Conejo', 'Ardilla', 'Ratón', 'Caballo', 'Vaca', 'Cerdo', 'Oveja', 'Gallina', 'Pato', 'Pavo', 'Águila', 'Búho', 'Loro', 'Delfín', 'Ballena', 'Tiburón', 'Pingüino', 'Foca', 'Cocodrilo', 'Serpiente', 'Tortuga', 'Rana', 'Canguro', 'Koala', 'Panda', 'Camello', 'Gorila'],
@@ -43,25 +45,22 @@ function App() {
 
     const checkRoom = async (code) => {
         try {
-            const result = localStorage.getItem(`room-${code}`);
-            return result ? JSON.parse(result) : null;
-        } catch {
+            const roomRef = ref(database, `rooms/${code}`);
+            const snapshot = await get(roomRef);
+            return snapshot.exists() ? snapshot.val() : null;
+        } catch (error) {
+            console.error('Error checking room:', error);
             return null;
         }
     };
 
     const saveRoom = async (code, data) => {
         try {
-            localStorage.setItem(`room-${code}`, JSON.stringify(data));
+            const roomRef = ref(database, `rooms/${code}`);
+            await set(roomRef, data);
         } catch (err) {
             console.error('Error saving room:', err);
         }
-    };
-
-    const loadRoomData = async (code) => {
-        const data = await checkRoom(code);
-        setRoomData(data);
-        return data;
     };
 
     const updatePlayerStatus = async (code, name) => {
@@ -70,9 +69,11 @@ function App() {
             if (room) {
                 const playerIndex = room.players.findIndex(p => p.name === name);
                 if (playerIndex !== -1) {
-                    room.players[playerIndex].lastSeen = Date.now();
-                    room.players[playerIndex].status = 'online';
-                    await saveRoom(code, room);
+                    const playerRef = ref(database, `rooms/${code}/players/${playerIndex}`);
+                    await update(playerRef, {
+                        lastSeen: Date.now(),
+                        status: 'online'
+                    });
                 }
             }
         } catch (err) {
@@ -101,23 +102,36 @@ function App() {
     }, []);
 
     useEffect(() => {
-        if (roomCode && playerName && (screen === 'lobby' || screen === 'game' || screen === 'results')) {
-            const interval = setInterval(async () => {
-                await updatePlayerStatus(roomCode, playerName);
-                const data = await loadRoomData(roomCode);
-                if (data && isHost) {
-                    const now = Date.now();
-                    const newLastSeen = {};
-                    data.players.forEach(p => {
-                        const timeSinceLastSeen = now - (p.lastSeen || now);
-                        newLastSeen[p.name] = timeSinceLastSeen > 10000 ? 'offline' : 'online';
-                    });
-                    setLastSeen(newLastSeen);
+        if (roomCode) {
+            const roomRef = ref(database, `rooms/${roomCode}`);
+            const unsubscribe = onValue(roomRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    setRoomData(data);
+
+                    if (isHost) {
+                        const now = Date.now();
+                        const newLastSeen = {};
+                        data.players.forEach(p => {
+                            const timeSinceLastSeen = now - (p.lastSeen || now);
+                            newLastSeen[p.name] = timeSinceLastSeen > 10000 ? 'offline' : 'online';
+                        });
+                        setLastSeen(newLastSeen);
+                    }
                 }
+            });
+            return () => unsubscribe();
+        }
+    }, [roomCode, isHost]);
+
+    useEffect(() => {
+        if (roomCode && playerName && (screen === 'lobby' || screen === 'game' || screen === 'results')) {
+            const interval = setInterval(() => {
+                updatePlayerStatus(roomCode, playerName);
             }, 3000);
             return () => clearInterval(interval);
         }
-    }, [roomCode, playerName, screen, isHost]);
+    }, [roomCode, playerName, screen]);
 
     const createRoom = async () => {
         if (!playerName.trim()) {
@@ -238,14 +252,12 @@ function App() {
             room.selectedCategories.push(cat);
         }
         await saveRoom(roomCode, room);
-        setRoomData(room);
     };
 
     const toggleAllCategories = async (selectAll) => {
         const room = await checkRoom(roomCode);
         room.selectedCategories = selectAll ? Object.keys(CATEGORIES) : ['Animales'];
         await saveRoom(roomCode, room);
-        setRoomData(room);
     };
 
     const copyCode = () => {
