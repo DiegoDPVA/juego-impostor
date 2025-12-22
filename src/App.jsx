@@ -2,46 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Users, Copy, Check, Crown, AlertCircle, Share2, Wifi, WifiOff, X, Settings } from 'lucide-react';
 
 // Mock Firebase (para pruebas locales)
-const createMockFirebase = () => {
-    let data = {};
-    const listeners = {};
-    return {
-        ref: (path) => ({ path }),
-        set: async (ref, value) => {
-            data[ref.path] = value;
-            if (listeners[ref.path]) {
-                listeners[ref.path].forEach(cb => cb({ exists: () => true, val: () => value }));
-            }
-        },
-        get: async (ref) => ({
-            exists: () => !!data[ref.path],
-            val: () => data[ref.path]
-        }),
-        onValue: (ref, callback) => {
-            if (!listeners[ref.path]) listeners[ref.path] = [];
-            listeners[ref.path].push(callback);
-            if (data[ref.path]) {
-                callback({ exists: () => true, val: () => data[ref.path] });
-            }
-            return () => {
-                listeners[ref.path] = listeners[ref.path].filter(cb => cb !== callback);
-            };
-        },
-        update: async (ref, value) => {
-            data[ref.path] = { ...data[ref.path], ...value };
-            if (listeners[ref.path]) {
-                listeners[ref.path].forEach(cb => cb({ exists: () => true, val: () => data[ref.path] }));
-            }
-        }
-    };
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, get, onValue, update } from "firebase/database";
+
+// 🔥 TU CONFIGURACIÓN DE FIREBASE (pégala aquí tal cual la copiaste de la consola)
+const firebaseConfig = {
+    apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    authDomain: "tu-proyecto.firebaseapp.com",
+    databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
+    projectId: "tu-proyecto",
+    storageBucket: "tu-proyecto.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef1234567890"
 };
-const mockDb = createMockFirebase();
-const database = mockDb;
-const ref = mockDb.ref;
-const set = mockDb.set;
-const get = mockDb.get;
-const onValue = mockDb.onValue;
-const update = mockDb.update;
+
+// Inicializar Firebase
+import { database } from './firebase';
+import { ref, set, get, onValue, update } from 'firebase/database';
 
 const WORDS_WITH_CLUES = {
     'Animales': {
