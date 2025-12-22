@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Copy, Check, Crown, AlertCircle, Share2, Wifi, WifiOff, X, Settings } from 'lucide-react';
 
-// Mock Firebase (para pruebas locales)
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, onValue, update } from "firebase/database";
-// Inicializar Firebase
 import { database } from './firebase';
 import { ref, set, get, onValue, update } from 'firebase/database';
 
