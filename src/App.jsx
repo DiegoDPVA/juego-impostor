@@ -61,7 +61,6 @@ const WORDS_WITH_CLUES = {
         'Pizza': ['Italiano', 'Masa', 'Horno', 'Redonda', 'Queso'],
         'Hamburguesa': ['Pan', 'Carne', 'Americana', 'Rápida', 'Redonda'],
         'Pasta': ['Italiana', 'Trigo', 'Salsa', 'Hervir', 'Larga'],
-        'Paella': ['Española', 'Arroz', 'Azafrán', 'Marisco', 'Valencia'],
         'Sushi': ['Japonés', 'Arroz', 'Pescado', 'Alga', 'Crudo'],
         'Tacos': ['Mexicano', 'Tortilla', 'Picante', 'Doblar'],
         'Burrito': ['Mexicano', 'Enrollado', 'Frijoles', 'Grande'],
@@ -209,7 +208,6 @@ const WORDS_WITH_CLUES = {
         'Zapatero': ['Zapato', 'Reparación', 'Suela', 'Cuero'],
         'Relojero': ['Tiempo', 'Precisión', 'Mecanismo', 'Pequeño'],
         'Cerrajero': ['Llave', 'Cerradura', 'Seguridad', 'Apertura'],
-        'Electricista': ['Corriente', 'Voltaje', 'Cable', 'Luz'],
         'Soldador': ['Metal', 'Calor', 'Unión', 'Máscara'],
         'Albañil': ['Construcción', 'Cemento', 'Ladrillo', 'Paleta']
     },
@@ -536,7 +534,6 @@ const WORDS_WITH_CLUES = {
         'Viuda Negra': ['Espía', 'Pelirroja', 'Agente', 'Rusa'],
         'Deadpool': ['Rojo', 'Espadas', 'Gracioso', 'Rompe'],
         'Wolverine': ['Garras', 'Mutante', 'Regeneración', 'Pelo'],
-        'Sonic': ['Azul', 'Velocidad', 'Anillos', 'Erizo'],
         'Mario': ['Bigote', 'Fontanero', 'Saltar', 'Rojo'],
         'Luigi': ['Verde', 'Bigote', 'Hermano', 'Alto'],
         'Pikachu': ['Amarillo', 'Eléctrico', 'Ratón', 'Rayo'],
