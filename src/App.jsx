@@ -967,25 +967,40 @@ function App() {
             setError('La partida ya comenzó');
             return;
         }
-        const existingPlayer = room.players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+
+        // Buscar jugador existente POR NOMBRE EXACTO
+        let existingPlayer = room.players.find(p => p.name === playerName);
+
         if (existingPlayer) {
+            // Reconexión: actualizar estado
             existingPlayer.lastSeen = Date.now();
             existingPlayer.status = 'online';
+            // Asegurar que tenga color (por si es jugador antiguo sin color)
+            if (!existingPlayer.color) {
+                const usedColors = room.players.map(p => p.color);
+                const availableColor = COLORS.find(c => !usedColors.includes(c)) || COLORS[room.players.length % COLORS.length];
+                existingPlayer.color = availableColor;
+            }
             await saveRoom(code, room);
             setRoomCode(code);
             setIsHost(room.host === playerName);
             setScreen('lobby');
             return;
         }
-        const colorIndex = room.players.length % COLORS.length;
+
+        // Jugador nuevo: asignar color único
+        const usedColors = room.players.map(p => p.color);
+        const availableColor = COLORS.find(c => !usedColors.includes(c)) || COLORS[room.players.length % COLORS.length];
+
         room.players.push({
             name: playerName,
-            color: COLORS[colorIndex],
+            color: availableColor,
             lastSeen: Date.now(),
             status: 'online',
             impostorWeight: 1,
             startWeight: 1
         });
+
         await saveRoom(code, room);
         setRoomCode(code);
         setIsHost(false);
