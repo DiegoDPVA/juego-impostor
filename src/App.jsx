@@ -4,18 +4,6 @@ import { Users, Copy, Check, Crown, AlertCircle, Share2, Wifi, WifiOff, X, Setti
 // Mock Firebase (para pruebas locales)
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update } from "firebase/database";
-
-// 🔥 TU CONFIGURACIÓN DE FIREBASE (pégala aquí tal cual la copiaste de la consola)
-const firebaseConfig = {
-    apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    authDomain: "tu-proyecto.firebaseapp.com",
-    databaseURL: "https://tu-proyecto-default-rtdb.firebaseio.com",
-    projectId: "tu-proyecto",
-    storageBucket: "tu-proyecto.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef1234567890"
-};
-
 // Inicializar Firebase
 import { database } from './firebase';
 import { ref, set, get, onValue, update } from 'firebase/database';
