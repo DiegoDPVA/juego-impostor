@@ -777,7 +777,7 @@ const WORDS_WITH_CLUES = {
     }
 };
 
-const COLORS = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-orange-500', 'bg-cyan-500', 'bg-lime-500', 'bg-indigo-500'];
+const COLORS = ['bg-gray-400'];
 
 function App() {
     const [screen, setScreen] = useState('home');
@@ -798,7 +798,7 @@ function App() {
     const generateCode = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         let code = '';
-        for (let i = 0; i = 6; i++) {
+        for (let i = 0; i < 6; i++) {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return code;
@@ -853,7 +853,80 @@ function App() {
         return 0;
     };
 
-    // ... (todos los useEffect igual que tenías)
+    const removePlayer = async (playerToRemove) => {
+        if (!isHost) return;
+        const room = await checkRoom(roomCode);
+        room.players = room.players.filter(p => p.name !== playerToRemove);
+        if (room.players.length === 0) {
+            return;
+        }
+        if (room.host === playerToRemove) {
+            room.host = room.players[0].name;
+        }
+        await saveRoom(roomCode, room);
+    };
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('sala');
+        if (code) {
+            setInputCode(code.toUpperCase());
+            setScreen('join');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (roomCode) {
+            const roomRef = ref(database, `rooms/${roomCode}`);
+            const unsubscribe = onValue(roomRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    setRoomData(data);
+                    if (isHost) {
+                        const now = Date.now();
+                        const newLastSeen = {};
+                        data.players.forEach(p => {
+                            const timeSinceLastSeen = now - (p.lastSeen || now);
+                            newLastSeen[p.name] = timeSinceLastSeen > 10000 ? 'offline' : 'online';
+                        });
+                        setLastSeen(newLastSeen);
+                    }
+                }
+            });
+            return () => unsubscribe();
+        }
+    }, [roomCode, isHost]);
+
+    useEffect(() => {
+        if (roomCode && playerName && (screen === 'lobby' || screen === 'game' || screen === 'results')) {
+            const interval = setInterval(() => {
+                updatePlayerStatus(roomCode, playerName);
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [roomCode, playerName, screen]);
+
+    useEffect(() => {
+        if (roomData && screen === 'game' && !myRole) {
+            const isImpostor = roomData.impostors?.includes(playerName);
+            setMyRole(isImpostor ? 'impostor' : 'crewmate');
+            if (isImpostor && roomData.settings.showClue && roomData.clue) {
+                setMyClue(roomData.clue);
+            }
+            setTimeout(() => setShowReveal(true), 500);
+        }
+    }, [roomData, screen, playerName, myRole]);
+
+    useEffect(() => {
+        if (roomData?.status === 'game' && screen === 'lobby') setScreen('game');
+        if (roomData?.status === 'results' && screen === 'game') setScreen('results');
+        if (roomData?.status === 'lobby' && (screen === 'results' || screen === 'game')) {
+            setScreen('lobby');
+            setMyRole(null);
+            setMyClue(null);
+            setShowReveal(false);
+        }
+    }, [roomData?.status, screen]);
 
     const createRoom = async () => {
         if (!playerName.trim()) {
@@ -920,11 +993,7 @@ function App() {
         if (existingPlayer) {
             existingPlayer.lastSeen = Date.now();
             existingPlayer.status = 'online';
-            if (!existingPlayer.color) {
-                const usedColors = room.players.map(p => p.color || '');
-                const availableColor = COLORS.find(c => !usedColors.includes(c)) || COLORS[usedColors.length % COLORS.length];
-                existingPlayer.color = availableColor;
-            }
+            existingPlayer.color = COLORS[0];
             await saveRoom(code, room);
             setRoomCode(code);
             setIsHost(room.host === playerName);
@@ -932,12 +1001,9 @@ function App() {
             return;
         }
 
-        const usedColors = room.players.map(p => p.color || '');
-        const availableColor = COLORS.find(c => !usedColors.includes(c)) || COLORS[usedColors.length % COLORS.length];
-
         room.players.push({
             name: playerName,
-            color: availableColor,
+            color: COLORS[0],
             lastSeen: Date.now(),
             status: 'online',
             impostorWeight: 1,
@@ -956,53 +1022,530 @@ function App() {
             setError('Sala no encontrada');
             return;
         }
+
+        room.clueWeights = room.clueWeights || {};
+
         if (room.players.length < 2) {
             setError('Mínimo 2 jugadores para comenzar');
             return;
         }
+
         if (room.settings.impostorCount >= room.players.length) {
             setError('Debe haber al menos 1 tripulante');
             return;
         }
+
         if (!room.selectedCategories || room.selectedCategories.length === 0) {
             setError('Selecciona al menos una categoría');
             return;
         }
 
         try {
-            // Todo el código de startGame igual, pero con await saveRoom al final
-            // ... (el código largo de selección de palabra, impostores, etc.)
+            const randomCategory = room.selectedCategories[
+                Math.floor(Math.random() * room.selectedCategories.length)
+            ];
+
+            const words = Object.keys(WORDS_WITH_CLUES[randomCategory]);
+            const randomWord = words[Math.floor(Math.random() * words.length)];
+            const clues = WORDS_WITH_CLUES[randomCategory][randomWord];
+
+            if (!room.clueWeights[randomWord]) {
+                room.clueWeights[randomWord] = clues.map(() => 1);
+            }
+
+            let selectedImpostors = [];
+            let availablePlayers = [...room.players];
+
+            for (let i = 0; i < room.settings.impostorCount; i++) {
+                const weights = availablePlayers.map(p => p.impostorWeight || 1);
+                const idx = selectWithWeights(availablePlayers, weights);
+                selectedImpostors.push(availablePlayers[idx].name);
+                availablePlayers.splice(idx, 1);
+            }
+
+            room.players.forEach(p => {
+                if (selectedImpostors.includes(p.name)) {
+                    p.impostorWeight = 0.3;
+                } else {
+                    p.impostorWeight = Math.min((p.impostorWeight || 1) * 1.2, 2);
+                }
+            });
+
+            let selectedClue = null;
+            if (room.settings.showClue) {
+                const clueWeights = room.clueWeights[randomWord];
+                const clueIdx = selectWithWeights(clues, clueWeights);
+                selectedClue = clues[clueIdx];
+
+                room.clueWeights[randomWord][clueIdx] = 0.2;
+                clues.forEach((_, idx) => {
+                    if (idx !== clueIdx) {
+                        room.clueWeights[randomWord][idx] = Math.min((room.clueWeights[randomWord][idx] || 1) * 1.3, 2);
+                    }
+                });
+            }
+
+            const startWeights = room.players.map(p => p.startWeight || 1);
+            const startIdx = selectWithWeights(room.players, startWeights);
+            const startPlayer = room.players[startIdx];
+
+            room.players[startIdx].startWeight = 0.4;
+            room.players.forEach((p, idx) => {
+                if (idx !== startIdx) {
+                    p.startWeight = Math.min((p.startWeight || 1) * 1.2, 2);
+                }
+            });
+
+            const turnOrder = [startPlayer.name];
+            let remaining = room.players.filter(p => p.name !== startPlayer.name);
+            while (remaining.length) {
+                const i = Math.floor(Math.random() * remaining.length);
+                turnOrder.push(remaining[i].name);
+                remaining.splice(i, 1);
+            }
+
+            room.status = 'game';
+            room.currentCategory = randomCategory;
+            room.word = randomWord;
+            room.impostors = selectedImpostors;
+            room.clue = selectedClue;
+            room.round = (room.round || 0) + 1;
+            room.turnOrder = turnOrder;
 
             await saveRoom(roomCode, room);
-            setScreen('game');
+
         } catch (err) {
-            console.error("Error al iniciar partida:", err);
-            setError('Error al iniciar la partida. Revisa las reglas de Firebase.');
+            console.error('Error al iniciar partida:', err);
+            setError('Error al iniciar la partida');
         }
     };
 
-    // ... el resto de funciones igual
+    const endRound = async () => {
+        const room = await checkRoom(roomCode);
+        if (!room) return;
+        room.status = 'results';
+        await saveRoom(roomCode, room);
+        setScreen('results');
+    };
 
-    // En el lobby, el botón con contador
+    const newRound = async () => {
+        const room = await checkRoom(roomCode);
+        if (!room) return;
+        room.status = 'lobby';
+        room.word = null;
+        room.impostors = [];
+        room.currentCategory = null;
+        room.clue = null;
+        room.turnOrder = [];
+        await saveRoom(roomCode, room);
+        setScreen('lobby');
+        setMyRole(null);
+        setMyClue(null);
+        setShowReveal(false);
+    };
 
-    {
-        isHost && (
-            <>
-                <div className="text-center text-white font-bold mb-4">
-                    Jugadores: {roomData?.players.length || 0}
+    const changeCategory = async (cat) => {
+        const room = await checkRoom(roomCode);
+        if (!room) return;
+        if (room.selectedCategories.includes(cat)) {
+            room.selectedCategories = room.selectedCategories.filter(c => c !== cat);
+            if (room.selectedCategories.length === 0) room.selectedCategories = [cat];
+        } else {
+            room.selectedCategories.push(cat);
+        }
+        await saveRoom(roomCode, room);
+    };
+
+    const toggleAllCategories = async (selectAll) => {
+        const room = await checkRoom(roomCode);
+        if (!room) return;
+        room.selectedCategories = selectAll ? Object.keys(WORDS_WITH_CLUES) : ['Animales'];
+        await saveRoom(roomCode, room);
+    };
+
+    const updateSettings = async (setting, value) => {
+        const room = await checkRoom(roomCode);
+        if (!room) return;
+        room.settings[setting] = value;
+        await saveRoom(roomCode, room);
+    };
+
+    const copyCode = () => {
+        navigator.clipboard.writeText(roomCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const copyLink = () => {
+        const link = `${window.location.origin}${window.location.pathname}?sala=${roomCode}`;
+        navigator.clipboard.writeText(link);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+    };
+
+    if (screen === 'home' || screen === 'join') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center p-4 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
                 </div>
-                <button
-                    onClick={startGame}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
-                    disabled={(roomData?.players.length || 0) < 2}
-                >
-                    {(roomData?.players.length || 0) < 2 ? 'Esperando más jugadores...' : 'Comenzar Partida'}
-                </button>
-            </>
-        )
+                <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full relative z-10">
+                    <div className="text-center mb-8">
+                        <div className="text-6xl mb-4 animate-bounce">🕵️</div>
+                        <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-600 to-blue-600 mb-2">IMPOSTOR</h1>
+                        <p className="text-gray-600 font-medium">¿Quién no sabe la palabra?</p>
+                    </div>
+                    <div className="space-y-4">
+                        <input
+                            type="text"
+                            placeholder="Tu nombre"
+                            value={playerName}
+                            onChange={(e) => { setPlayerName(e.target.value); setError(''); }}
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none transition-all"
+                            maxLength={15}
+                        />
+                        {error && (
+                            <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+                                <AlertCircle size={16} />
+                                {error}
+                            </div>
+                        )}
+                        {screen === 'join' && (
+                            <input
+                                type="text"
+                                placeholder="Código de sala"
+                                value={inputCode}
+                                onChange={(e) => { setInputCode(e.target.value.toUpperCase()); setError(''); }}
+                                className="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:outline-none uppercase transition-all"
+                                maxLength={6}
+                            />
+                        )}
+                        {screen === 'home' && (
+                            <>
+                                <button onClick={createRoom} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 shadow-lg active:scale-95">
+                                    Crear Sala
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 h-px bg-gray-300"></div>
+                                    <span className="text-gray-400 text-sm font-medium">o</span>
+                                    <div className="flex-1 h-px bg-gray-300"></div>
+                                </div>
+                                <button onClick={() => setScreen('join')} className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg active:scale-95">
+                                    Unirse a Sala
+                                </button>
+                            </>
+                        )}
+                        {screen === 'join' && (
+                            <>
+                                <button onClick={joinRoom} className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg active:scale-95">
+                                    Unirse
+                                </button>
+                                <button onClick={() => { setScreen('home'); setInputCode(''); setError(''); }} className="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all">
+                                    Volver
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
     }
 
-    // ... resto del return igual
+    if (screen === 'lobby') {
+        const maxImpostors = (roomData?.players.length || 1) - 1;
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-4 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-10 left-20 w-64 h-64 bg-white rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-10 right-20 w-80 h-80 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
+                </div>
+                <div className="max-w-2xl mx-auto relative z-10">
+                    <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6">
+                        <div className="text-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-3">Código de Sala</h2>
+                            <div className="flex items-center justify-center gap-2 mb-3">
+                                <div className="text-4xl font-bold text-purple-600 tracking-wider bg-gradient-to-r from-purple-100 to-pink-100 px-6 py-3 rounded-xl shadow-inner">
+                                    {roomCode}
+                                </div>
+                                <button onClick={copyCode} className="p-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-all transform hover:scale-110 active:scale-95 shadow-lg" title="Copiar código">
+                                    {copied ? <Check size={24} /> : <Copy size={24} />}
+                                </button>
+                            </div>
+                            <button onClick={copyLink} className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-full hover:from-blue-600 hover:to-cyan-600 transition-all transform hover:scale-105 active:scale-95 shadow-lg">
+                                <Share2 size={18} />
+                                {copiedLink ? '¡Enlace copiado!' : 'Compartir enlace'}
+                            </button>
+                        </div>
+
+                        {isHost && (
+                            <>
+                                <div className="mb-4">
+                                    <button
+                                        onClick={() => setShowSettings(!showSettings)}
+                                        className="flex items-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all"
+                                    >
+                                        <Settings size={20} />
+                                        <span className="font-semibold">Configuración</span>
+                                    </button>
+                                </div>
+                                {showSettings && (
+                                    <div className="mb-6 space-y-4 bg-gradient-to-br from-gray-50 to-purple-50 p-4 rounded-xl border-2 border-purple-100">
+                                        <div>
+                                            <label className="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer">
+                                                <span className="font-medium text-gray-700">Mostrar categoría a todos</span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={roomData?.settings?.showCategory}
+                                                    onChange={(e) => updateSettings('showCategory', e.target.checked)}
+                                                    className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                                />
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label className="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer">
+                                                <span className="font-medium text-gray-700">Dar pista al impostor</span>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={roomData?.settings?.showClue}
+                                                    onChange={(e) => updateSettings('showClue', e.target.checked)}
+                                                    className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                                />
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label className="block text-gray-700 font-medium mb-2">Número de impostores: {roomData?.settings?.impostorCount || 1}</label>
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max={maxImpostors}
+                                                value={roomData?.settings?.impostorCount || 1}
+                                                onChange={(e) => updateSettings('impostorCount', parseInt(e.target.value))}
+                                                className="w-full accent-purple-600"
+                                            />
+                                            <div className="flex justify-between text-sm text-gray-500 mt-1">
+                                                <span>1</span>
+                                                <span>{maxImpostors}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="mb-6">
+                                    <label className="block text-gray-700 font-semibold mb-3">Categorías seleccionadas:</label>
+                                    <div className="space-y-2 max-h-60 overflow-y-auto bg-gradient-to-br from-gray-50 to-purple-50 p-3 rounded-xl border-2 border-purple-100">
+                                        <label className="flex items-center gap-3 p-3 hover:bg-white rounded-lg cursor-pointer transition-all hover:shadow-md">
+                                            <input
+                                                type="checkbox"
+                                                checked={roomData?.selectedCategories?.length === Object.keys(WORDS_WITH_CLUES).length}
+                                                onChange={(e) => toggleAllCategories(e.target.checked)}
+                                                className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                            />
+                                            <span className="font-bold text-purple-600">✨ Todas las categorías</span>
+                                        </label>
+                                        <div className="h-px bg-gray-300 my-2"></div>
+                                        {Object.keys(WORDS_WITH_CLUES).map(cat => (
+                                            <label key={cat} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-all hover:shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={roomData?.selectedCategories?.includes(cat)}
+                                                    onChange={() => changeCategory(cat)}
+                                                    className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                                />
+                                                <span className="text-gray-700 font-medium">{cat}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {!isHost && (
+                            <div className="mb-6 text-center">
+                                <p className="text-lg text-gray-700 mb-3 font-semibold">Categorías activas:</p>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    {roomData?.selectedCategories?.map(cat => (
+                                        <span key={cat} className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
+                                            {cat}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mb-6">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Users size={20} className="text-gray-600" />
+                                <h3 className="text-lg font-semibold text-gray-800">Jugadores ({roomData?.players.length || 0})</h3>
+                            </div>
+                            <div className="space-y-2">
+                                {roomData?.players.map((player, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-gray-100 to-white shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-full ${player.color || 'bg-gray-400'} flex items-center justify-center text-white font-bold text-xl shadow-inner`}>
+                                                {player.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <span className="font-semibold text-gray-800">{player.name}</span>
+                                            {roomData?.host === player.name && <Crown size={16} className="text-yellow-500" />}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {(lastSeen[player.name] || player.status) === 'online' ? (
+                                                <Wifi size={16} className="text-green-500" />
+                                            ) : (
+                                                <WifiOff size={16} className="text-red-500" />
+                                            )}
+                                            {isHost && player.name !== playerName && (
+                                                <button
+                                                    onClick={() => removePlayer(player.name)}
+                                                    className="p-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                                                    title="Expulsar"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {isHost && (
+                            <button
+                                onClick={startGame}
+                                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
+                                disabled={(roomData?.players.length || 0) < 2}
+                            >
+                                {(roomData?.players.length || 0) < 2 ? 'Esperando más jugadores...' : 'Comenzar Partida'}
+                            </button>
+                        )}
+
+                        {error && (
+                            <div className="mt-4 flex items-center gap-2 text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+                                <AlertCircle size={16} />
+                                {error}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (screen === 'game') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-4relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-10 left-20 w-64 h-64 bg-white rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-10 right-20 w-80 h-80 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
+                </div>
+                <div className="max-w-md mx-auto relative z-10">
+                    <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6">
+                        <div className="text-center mb-6">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">Ronda {roomData?.round}</h2>
+                            {roomData?.settings?.showCategory && (
+                                <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-xl mb-4">
+                                    <p className="text-xl font-semibold text-purple-700">Categoría: {roomData?.currentCategory}</p>
+                                </div>
+                            )}
+                            {showReveal && (
+                                <div className="animate__animated animate__fadeIn">
+                                    {myRole === 'impostor' ? (
+                                        <div>
+                                            <div className="text-4xl font-black text-red-600 mb-4 animate-bounce">¡ERES EL IMPOSTOR!</div>
+                                            {myClue && (
+                                                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-xl">
+                                                    <p className="text-lg font-semibold text-orange-700">Pista: {myClue}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className="text-2xl font-bold text-gray-700 mb-2">{playerName}</p>
+                                            <p className="text-4xl font-black text-blue-600 animate-pulse">{roomData?.word}</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        {roomData?.turnOrder && roomData.turnOrder.length > 0 && (
+                            <div className="mb-6">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-3">Orden de turnos</h3>
+                                <div className="space-y-2">
+                                    {roomData.turnOrder.map((name, idx) => {
+                                        const player = roomData.players.find(p => p.name === name);
+                                        return (
+                                            <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-100 shadow-md' : 'bg-gradient-to-r from-gray-100 to-white'}`}>
+                                                <span className="font-bold text-gray-600 w-6">{idx + 1}.</span>
+                                                <div className={`w-8 h-8 rounded-full ${player?.color || 'bg-gray-500'} flex items-center justify-center text-white font-bold shadow-inner`}>
+                                                    {name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <span className="font-medium text-gray-700">{name}</span>
+                                                {idx === 0 && <span className="ml-auto text-yellow-600 font-bold">🎯 Empieza</span>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {isHost && (
+                            <button
+                                onClick={endRound}
+                                className="w-full bg-gradient-to-r from-red-500 to-orange-600 text-white font-bold py-4 rounded-xl hover:from-red-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
+                            >
+                                Terminar Ronda y Revelar Impostor
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (screen === 'results') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-4 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-10 left-20 w-64 h-64 bg-white rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-10 right-20 w-80 h-80 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
+                </div>
+                <div className="max-w-md mx-auto relative z-10">
+                    <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6">
+                        <div className="text-center mb-6">
+                            <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Ronda Terminada!</h2>
+                            <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-xl mb-4">
+                                <p className="text-xl font-semibold text-purple-700">Categoría: {roomData?.currentCategory}</p>
+                                <p className="text-2xl font-bold text-blue-600 mt-2">Palabra: {roomData?.word}</p>
+                            </div>
+                            <div className="text-3xl font-black text-red-600 mb-4 animate-bounce">
+                                {roomData?.impostors && roomData.impostors.length > 1 ? '¡Los impostores eran:' : '¡El impostor era:'}
+                            </div>
+                            <div className="space-y-2">
+                                {roomData?.impostors?.map((impostor, idx) => (
+                                    <div key={idx} className="text-2xl font-bold text-red-500">
+                                        {impostor}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {isHost && (
+                            <button
+                                onClick={newRound}
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
+                            >
+                                Nueva Ronda
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center">
+            <div className="text-white text-2xl">Cargando...</div>
+        </div>
+    );
 }
 
 export default App;
