@@ -1064,12 +1064,13 @@ function App() {
             }
 
             room.players.forEach(p => {
-                if (selectedImpostors.includes(p.name)) {
-                    p.impostorWeight = 0.3;
+                if (room.impostors?.includes(p.name)) {
+                    p.impostorWeight = 0.75;
                 } else {
-                    p.impostorWeight = Math.min((p.impostorWeight || 1) * 1.2, 2);
+                    p.impostorWeight = 1;
                 }
             });
+
 
             let selectedClue = null;
             if (room.settings.showClue) {
@@ -1185,14 +1186,14 @@ function App() {
 
     if (screen === 'home' || screen === 'join') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center p-4 relative overflow-hidden">
+            <div className="min-h-screen bg-bg-main text-text-main flex items-center justify-center p-4 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-20">
                     <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse"></div>
                     <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
                 </div>
-                <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full relative z-10">
+                <div className="bg-bg-panel rounded-2xl shadow-soft p-8 max-w-md w-full relative z-10">
                     <div className="text-center mb-8">
-                        <div className="text-6xl mb-4 animate-bounce">🕵️</div>
+                        <div className="text-6xl mb-4 animate-bounce">🎭</div>
                         <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-600 to-blue-600 mb-2">IMPOSTOR</h1>
                         <p className="text-gray-600 font-medium">¿Quién no sabe la palabra?</p>
                     </div>
@@ -1202,7 +1203,7 @@ function App() {
                             placeholder="Tu nombre"
                             value={playerName}
                             onChange={(e) => { setPlayerName(e.target.value); setError(''); }}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-bg-input text-black border-2 border-bg-soft rounded-xl focus:border-accent-primary focus:outline-none transition-all"
                             maxLength={15}
                         />
                         {error && (
@@ -1217,7 +1218,7 @@ function App() {
                                 placeholder="Código de sala"
                                 value={inputCode}
                                 onChange={(e) => { setInputCode(e.target.value.toUpperCase()); setError(''); }}
-                                className="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:outline-none uppercase transition-all"
+                                className="w-full px-4 py-3 bg-bg-input text-black border-2 border-bg-soft rounded-xl focus:border-accent-primary focus:outline-none transition-all uppercase"
                                 maxLength={6}
                             />
                         )}
@@ -1255,13 +1256,13 @@ function App() {
     if (screen === 'lobby') {
         const maxImpostors = (roomData?.players.length || 1) - 1;
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-4 relative overflow-hidden">
+            <div className="min-h-screen bg-bg-main text-text-main flex items-center justify-center p-4 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-10 left-20 w-64 h-64 bg-white rounded-full blur-3xl animate-pulse"></div>
                     <div className="absolute bottom-10 right-20 w-80 h-80 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
                 </div>
                 <div className="max-w-2xl mx-auto relative z-10">
-                    <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6">
+                    <div className="bg-bg-panel rounded-2xl shadow-soft p-8 max-w-md w-full relative z-10">
                         <div className="text-center mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 mb-3">Código de Sala</h2>
                             <div className="flex items-center justify-center gap-2 mb-3">
@@ -1283,12 +1284,13 @@ function App() {
                                 <div className="mb-4">
                                     <button
                                         onClick={() => setShowSettings(!showSettings)}
-                                        className="flex items-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all"
+                                        className="flex items-center gap-2 w-full px-4 py-3 bg-bg-panel rounded-xl hover:bg-bg-soft transition-all"
                                     >
-                                        <Settings size={20} />
-                                        <span className="font-semibold">Configuración</span>
+                                        <Settings size={20} className="text-text-dark" />
+                                        <span className="font-semibold text-text-dark">Configuración</span>
                                     </button>
                                 </div>
+
                                 {showSettings && (
                                     <div className="mb-6 space-y-4 bg-gradient-to-br from-gray-50 to-purple-50 p-4 rounded-xl border-2 border-purple-100">
                                         <div>
@@ -1332,7 +1334,7 @@ function App() {
                                 )}
                                 <div className="mb-6">
                                     <label className="block text-gray-700 font-semibold mb-3">Categorías seleccionadas:</label>
-                                    <div className="space-y-2 max-h-60 overflow-y-auto bg-gradient-to-br from-gray-50 to-purple-50 p-3 rounded-xl border-2 border-purple-100">
+                                    <div className="space-y-2 max-h-60 overflow-y-auto bg-bg-panel p-3 rounded-xl border border-text-muted">
                                         <label className="flex items-center gap-3 p-3 hover:bg-white rounded-lg cursor-pointer transition-all hover:shadow-md">
                                             <input
                                                 type="checkbox"
@@ -1381,7 +1383,7 @@ function App() {
                                 {roomData?.players.map((player, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-gray-100 to-white shadow-sm hover:shadow-md transition-all">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-full ${player.color || 'bg-gray-400'} flex items-center justify-center text-white font-bold text-xl shadow-inner`}>
+                                            <div className={`w-10 h-10 rounded-full bg-bg-soft text-text-main flex items-center justify-center font-bold text-xl shadow-soft`}>
                                                 {player.name.charAt(0).toUpperCase()}
                                             </div>
                                             <span className="font-semibold text-gray-800">{player.name}</span>
@@ -1411,7 +1413,7 @@ function App() {
                         {isHost && (
                             <button
                                 onClick={startGame}
-                                className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
+                                className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
                                 disabled={(roomData?.players.length || 0) < 2}
                             >
                                 {(roomData?.players.length || 0) < 2 ? 'Esperando más jugadores...' : 'Comenzar Partida'}
@@ -1432,13 +1434,13 @@ function App() {
 
     if (screen === 'game') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-4relative overflow-hidden">
+            <div className="min-h-screen bg-bg-main text-text-main flex items-center justify-center p-4 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-10 left-20 w-64 h-64 bg-white rounded-full blur-3xl animate-pulse"></div>
                     <div className="absolute bottom-10 right-20 w-80 h-80 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
                 </div>
                 <div className="max-w-md mx-auto relative z-10">
-                    <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6">
+                    <div className="bg-bg-panel rounded-2xl shadow-soft p-8 max-w-md w-full relative z-10">
                         <div className="text-center mb-6">
                             <h2 className="text-3xl font-bold text-gray-800 mb-4">Ronda {roomData?.round}</h2>
                             {roomData?.settings?.showCategory && (
@@ -1450,7 +1452,7 @@ function App() {
                                 <div className="animate__animated animate__fadeIn">
                                     {myRole === 'impostor' ? (
                                         <div>
-                                            <div className="text-4xl font-black text-red-600 mb-4 animate-bounce">¡ERES EL IMPOSTOR!</div>
+                                            <div className="text-4xl font-black text-accent-danger mb-4 animate-scaleIn">¡ERES EL IMPOSTOR!</div>
                                             {myClue && (
                                                 <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-xl">
                                                     <p className="text-lg font-semibold text-orange-700">Pista: {myClue}</p>
@@ -1460,7 +1462,7 @@ function App() {
                                     ) : (
                                         <>
                                             <p className="text-2xl font-bold text-gray-700 mb-2">{playerName}</p>
-                                            <p className="text-4xl font-black text-blue-600 animate-pulse">{roomData?.word}</p>
+                                            <p className="text-4xl font-black text-accent-primary animate-scaleIn">{roomData?.word}</p>
                                         </>
                                     )}
                                 </div>
@@ -1473,7 +1475,7 @@ function App() {
                                     {roomData.turnOrder.map((name, idx) => {
                                         const player = roomData.players.find(p => p.name === name);
                                         return (
-                                            <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? 'bg-gradient-to-r from-yellow-200 to-yellow-100 shadow-md' : 'bg-gradient-to-r from-gray-100 to-white'}`}>
+                                            <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? 'bg-yellow-200' : 'bg-gray-100'}`}>
                                                 <span className="font-bold text-gray-600 w-6">{idx + 1}.</span>
                                                 <div className={`w-8 h-8 rounded-full ${player?.color || 'bg-gray-500'} flex items-center justify-center text-white font-bold shadow-inner`}>
                                                     {name.charAt(0).toUpperCase()}
@@ -1490,10 +1492,11 @@ function App() {
                         {isHost && (
                             <button
                                 onClick={endRound}
-                                className="w-full bg-gradient-to-r from-red-500 to-orange-600 text-white font-bold py-4 rounded-xl hover:from-red-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
+                                className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
                             >
                                 Terminar Ronda y Revelar Impostor
                             </button>
+
                         )}
                     </div>
                 </div>
@@ -1503,13 +1506,13 @@ function App() {
 
     if (screen === 'results') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-4 relative overflow-hidden">
+            <div className="min-h-screen bg-bg-main text-text-main flex items-center justify-center p-4 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-10 left-20 w-64 h-64 bg-white rounded-full blur-3xl animate-pulse"></div>
                     <div className="absolute bottom-10 right-20 w-80 h-80 bg-cyan-300 rounded-full blur-3xl animate-pulse"></div>
                 </div>
                 <div className="max-w-md mx-auto relative z-10">
-                    <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-6">
+                    <div className="bg-bg-panel rounded-2xl shadow-soft p-8 max-w-md w-full relative z-10">
                         <div className="text-center mb-6">
                             <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Ronda Terminada!</h2>
                             <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-xl mb-4">
@@ -1542,7 +1545,7 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center">
+        <div className="min-h-screen bg-bg-main text-text-main flex items-center justify-center p-4 relative overflow-hidden">
             <div className="text-white text-2xl">Cargando...</div>
         </div>
     );

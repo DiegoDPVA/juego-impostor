@@ -7,12 +7,22 @@ body,
 #root {
     height: 100%;
     margin: 0;
+    padding: 0;
+    background: radial-gradient(circle at top,
+            #1d2230 0%,
+            #0f1115 60%);
+    color: #e5e7eb;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
 }
 
-html,
-body,
-#root {
-    height: 100%;
-    margin: 0;
-    padding: 0;
+/* Quita el highlight feo en móvil */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Transiciones suaves por defecto */
+button,
+input {
+    transition: all 0.2s ease;
 }
