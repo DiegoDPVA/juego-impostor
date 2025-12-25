@@ -1195,7 +1195,7 @@ function App() {
                     <div className="text-center mb-8">
                         <div className="text-6xl mb-4 animate-bounce">🎭</div>
                         <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-600 to-blue-600 mb-2">IMPOSTOR</h1>
-                        <p className="text-gray-600 font-medium">¿Quién no sabe la palabra?</p>
+                        <p className="text-white-600 font-medium">Adivina la palabra</p>
                     </div>
                     <div className="space-y-4">
                         <input
@@ -1203,7 +1203,7 @@ function App() {
                             placeholder="Tu nombre"
                             value={playerName}
                             onChange={(e) => { setPlayerName(e.target.value); setError(''); }}
-                            className="w-full px-4 py-3 bg-bg-input text-black border-2 border-bg-soft rounded-xl focus:border-accent-primary focus:outline-none transition-all"
+                            className="w-full px-4 py-3 bg-gray-900 text-white border-2 border-bg-soft rounded-xl focus:border-accent-primary focus:outline-none transition-all"
                             maxLength={15}
                         />
                         {error && (
@@ -1218,7 +1218,7 @@ function App() {
                                 placeholder="Código de sala"
                                 value={inputCode}
                                 onChange={(e) => { setInputCode(e.target.value.toUpperCase()); setError(''); }}
-                                className="w-full px-4 py-3 bg-bg-input text-black border-2 border-bg-soft rounded-xl focus:border-accent-primary focus:outline-none transition-all uppercase"
+                                className="w-full px-4 py-3 bg-gray-900 text-white border-2 border-bg-soft rounded-xl focus:border-accent-primary focus:outline-none transition-all"
                                 maxLength={6}
                             />
                         )}
@@ -1242,7 +1242,7 @@ function App() {
                                 <button onClick={joinRoom} className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg active:scale-95">
                                     Unirse
                                 </button>
-                                <button onClick={() => { setScreen('home'); setInputCode(''); setError(''); }} className="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all">
+                                <button onClick={() => { setScreen('home'); setInputCode(''); setError(''); }} className="w-full bg-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-300 transition-all transform hover:scale-105 shadow-lg active:scale-95">
                                     Volver
                                 </button>
                             </>
@@ -1264,12 +1264,12 @@ function App() {
                 <div className="max-w-2xl mx-auto relative z-10">
                     <div className="bg-bg-panel rounded-2xl shadow-soft p-8 max-w-md w-full relative z-10">
                         <div className="text-center mb-6">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-3">Código de Sala</h2>
+                            <h2 className="text-2xl font-bold text-white mb-3">Código de Sala</h2>
                             <div className="flex items-center justify-center gap-2 mb-3">
-                                <div className="text-4xl font-bold text-purple-600 tracking-wider bg-gradient-to-r from-purple-100 to-pink-100 px-6 py-3 rounded-xl shadow-inner">
+                                <div className="text-4xl font-bold text-white tracking-wider bg-bg-soft from-purple-100 to-pink-100 px-6 py-3 rounded-xl shadow-inner">
                                     {roomCode}
                                 </div>
-                                <button onClick={copyCode} className="p-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-all transform hover:scale-110 active:scale-95 shadow-lg" title="Copiar código">
+                                <button onClick={copyCode} className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all transform hover:scale-110 active:scale-95 shadow-lg" title="Copiar código">
                                     {copied ? <Check size={24} /> : <Copy size={24} />}
                                 </button>
                             </div>
@@ -1284,7 +1284,7 @@ function App() {
                                 <div className="mb-4">
                                     <button
                                         onClick={() => setShowSettings(!showSettings)}
-                                        className="flex items-center gap-2 w-full px-4 py-3 bg-bg-panel rounded-xl hover:bg-bg-soft transition-all"
+                                        className="flex items-center gap-2 w-full px-4 py-3 bg-bg-soft rounded-xl hover:bg-gray-800 transition-all"
                                     >
                                         <Settings size={20} className="text-text-dark" />
                                         <span className="font-semibold text-text-dark">Configuración</span>
@@ -1292,40 +1292,40 @@ function App() {
                                 </div>
 
                                 {showSettings && (
-                                    <div className="mb-6 space-y-4 bg-gradient-to-br from-gray-50 to-purple-50 p-4 rounded-xl border-2 border-purple-100">
+                                    <div className="mb-6 space-y-4 bg-bg-soft from-gray-50 to-purple-50 p-4 rounded-xl border-2 border-gray-900">
                                         <div>
-                                            <label className="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer">
-                                                <span className="font-medium text-gray-700">Mostrar categoría a todos</span>
+                                            <label className="flex items-center justify-between p-3 bg-gray-950 rounded-lg hover:shadow-md transition-all cursor-pointer">
+                                                <span className="font-medium text-white">Mostrar categoría</span>
                                                 <input
                                                     type="checkbox"
                                                     checked={roomData?.settings?.showCategory}
                                                     onChange={(e) => updateSettings('showCategory', e.target.checked)}
-                                                    className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                                    className="w-5 h-5 accent-blue-600 cursor-pointer"
                                                 />
                                             </label>
                                         </div>
                                         <div>
-                                            <label className="flex items-center justify-between p-3 bg-white rounded-lg hover:shadow-md transition-all cursor-pointer">
-                                                <span className="font-medium text-gray-700">Dar pista al impostor</span>
+                                            <label className="flex items-center justify-between p-3 bg-gray-950 rounded-lg hover:shadow-md transition-all cursor-pointer">
+                                                <span className="font-medium text-white">Dar pista al impostor</span>
                                                 <input
                                                     type="checkbox"
                                                     checked={roomData?.settings?.showClue}
                                                     onChange={(e) => updateSettings('showClue', e.target.checked)}
-                                                    className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                                    className="w-5 h-5 accent-blue-600 cursor-pointer"
                                                 />
                                             </label>
                                         </div>
                                         <div>
-                                            <label className="block text-gray-700 font-medium mb-2">Número de impostores: {roomData?.settings?.impostorCount || 1}</label>
+                                            <label className="block text-white font-medium mb-2">Número de impostores: {roomData?.settings?.impostorCount || 1}</label>
                                             <input
                                                 type="range"
                                                 min="1"
                                                 max={maxImpostors}
                                                 value={roomData?.settings?.impostorCount || 1}
                                                 onChange={(e) => updateSettings('impostorCount', parseInt(e.target.value))}
-                                                className="w-full accent-purple-600"
+                                                className="w-full accent-blue-600"
                                             />
-                                            <div className="flex justify-between text-sm text-gray-500 mt-1">
+                                            <div className="flex justify-between text-sm text-white mt-1">
                                                 <span>1</span>
                                                 <span>{maxImpostors}</span>
                                             </div>
@@ -1333,27 +1333,27 @@ function App() {
                                     </div>
                                 )}
                                 <div className="mb-6">
-                                    <label className="block text-gray-700 font-semibold mb-3">Categorías seleccionadas:</label>
-                                    <div className="space-y-2 max-h-60 overflow-y-auto bg-bg-panel p-3 rounded-xl border border-text-muted">
-                                        <label className="flex items-center gap-3 p-3 hover:bg-white rounded-lg cursor-pointer transition-all hover:shadow-md">
+                                    <label className="block text-white font-semibold mb-3">Categorías seleccionadas:</label>
+                                    <div className="space-y-2 max-h-60 overflow-y-auto bg-bg-soft p-3 rounded-xl border-2 border-gray-900">
+                                        <label className="flex items-center gap-3 p-3 hover:bg-gray-900 rounded-lg cursor-pointer transition-all hover:shadow-md">
                                             <input
                                                 type="checkbox"
                                                 checked={roomData?.selectedCategories?.length === Object.keys(WORDS_WITH_CLUES).length}
                                                 onChange={(e) => toggleAllCategories(e.target.checked)}
-                                                className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                                className="w-5 h-5 accent-blue-600 cursor-pointer"
                                             />
-                                            <span className="font-bold text-purple-600">✨ Todas las categorías</span>
+                                            <span className="font-bold text-white">Todas las categorías</span>
                                         </label>
                                         <div className="h-px bg-gray-300 my-2"></div>
                                         {Object.keys(WORDS_WITH_CLUES).map(cat => (
-                                            <label key={cat} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-all hover:shadow-sm">
+                                            <label key={cat} className="flex items-center gap-3 p-2 hover:bg-gray-900 rounded-lg cursor-pointer transition-all hover:shadow-sm">
                                                 <input
                                                     type="checkbox"
                                                     checked={roomData?.selectedCategories?.includes(cat)}
                                                     onChange={() => changeCategory(cat)}
-                                                    className="w-5 h-5 accent-purple-600 cursor-pointer"
+                                                    className="w-5 h-5 accent-blue-600 cursor-pointer"
                                                 />
-                                                <span className="text-gray-700 font-medium">{cat}</span>
+                                                <span className="text-white font-medium">{cat}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -1363,10 +1363,10 @@ function App() {
 
                         {!isHost && (
                             <div className="mb-6 text-center">
-                                <p className="text-lg text-gray-700 mb-3 font-semibold">Categorías activas:</p>
+                                <p className="text-lg text-white mb-3 font-semibold">Categorías activas:</p>
                                 <div className="flex flex-wrap gap-2 justify-center">
                                     {roomData?.selectedCategories?.map(cat => (
-                                        <span key={cat} className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-4 py-2 rounded-full text-sm font-semibold shadow-sm">
+                                        <span key={cat} className="bg-bg-soft from-purple-100 to-pink-100 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-sm border">
                                             {cat}
                                         </span>
                                     ))}
@@ -1376,17 +1376,17 @@ function App() {
 
                         <div className="mb-6">
                             <div className="flex items-center gap-2 mb-3">
-                                <Users size={20} className="text-gray-600" />
-                                <h3 className="text-lg font-semibold text-gray-800">Jugadores ({roomData?.players.length || 0})</h3>
+                                <Users size={20} className="text-white" />
+                                <h3 className="text-lg font-semibold text-white">Jugadores ({roomData?.players.length || 0})</h3>
                             </div>
                             <div className="space-y-2">
                                 {roomData?.players.map((player, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-gray-100 to-white shadow-sm hover:shadow-md transition-all">
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-bg-soft shadow-sm hover:shadow-md transition-all">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-full bg-bg-soft text-text-main flex items-center justify-center font-bold text-xl shadow-soft`}>
+                                            <div className={`w-10 h-10 rounded-full bg-gray-900 text-text-main flex items-center justify-center font-bold text-xl shadow-soft border`}>
                                                 {player.name.charAt(0).toUpperCase()}
                                             </div>
-                                            <span className="font-semibold text-gray-800">{player.name}</span>
+                                            <span className="font-semibold text-white">{player.name}</span>
                                             {roomData?.host === player.name && <Crown size={16} className="text-yellow-500" />}
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -1442,26 +1442,26 @@ function App() {
                 <div className="max-w-md mx-auto relative z-10">
                     <div className="bg-bg-panel rounded-2xl shadow-soft p-8 max-w-md w-full relative z-10">
                         <div className="text-center mb-6">
-                            <h2 className="text-3xl font-bold text-gray-800 mb-4">Ronda {roomData?.round}</h2>
+                            <h2 className="text-3xl font-bold text-white mb-4">Ronda {roomData?.round}</h2>
                             {roomData?.settings?.showCategory && (
-                                <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-xl mb-4">
-                                    <p className="text-xl font-semibold text-purple-700">Categoría: {roomData?.currentCategory}</p>
+                                <div className="bg-bg-soft p-4 rounded-xl mb-4">
+                                    <p className="text-xl font-semibold text-white">Categoría: {roomData?.currentCategory}</p>
                                 </div>
                             )}
                             {showReveal && (
                                 <div className="animate__animated animate__fadeIn">
                                     {myRole === 'impostor' ? (
                                         <div>
-                                            <div className="text-4xl font-black text-accent-danger mb-4 animate-scaleIn">¡ERES EL IMPOSTOR!</div>
+                                            <div className="text-4xl font-black text-accent-danger mb-4 animate-scaleIn">ERES EL IMPOSTOR</div>
                                             {myClue && (
-                                                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-xl">
-                                                    <p className="text-lg font-semibold text-orange-700">Pista: {myClue}</p>
+                                                <div>
+                                                    <p className="text-lg font-semibold text-white">Pista: {myClue}</p>
+
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
                                         <>
-                                            <p className="text-2xl font-bold text-gray-700 mb-2">{playerName}</p>
                                             <p className="text-4xl font-black text-accent-primary animate-scaleIn">{roomData?.word}</p>
                                         </>
                                     )}
@@ -1470,18 +1470,17 @@ function App() {
                         </div>
                         {roomData?.turnOrder && roomData.turnOrder.length > 0 && (
                             <div className="mb-6">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-3">Orden de turnos</h3>
+                                <h3 className="text-lg font-semibold text-white mb-3">Orden de turnos</h3>
                                 <div className="space-y-2">
                                     {roomData.turnOrder.map((name, idx) => {
                                         const player = roomData.players.find(p => p.name === name);
                                         return (
-                                            <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? 'bg-yellow-200' : 'bg-gray-100'}`}>
-                                                <span className="font-bold text-gray-600 w-6">{idx + 1}.</span>
+                                            <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${idx === 0 ? 'bg-bg-soft' : 'bg-bg-soft'}`}>
                                                 <div className={`w-8 h-8 rounded-full ${player?.color || 'bg-gray-500'} flex items-center justify-center text-white font-bold shadow-inner`}>
                                                     {name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-medium text-gray-700">{name}</span>
-                                                {idx === 0 && <span className="ml-auto text-yellow-600 font-bold">🎯 Empieza</span>}
+                                                <span className="font-medium text-white">{name}</span>
+                                                {idx === 0 && <span className="ml-auto text-blue-600 font-bold">🎯 Empieza</span>}
                                             </div>
                                         );
                                     })}
@@ -1494,7 +1493,7 @@ function App() {
                                 onClick={endRound}
                                 className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
                             >
-                                Terminar Ronda y Revelar Impostor
+                                Revelar Impostor
                             </button>
 
                         )}
@@ -1514,17 +1513,16 @@ function App() {
                 <div className="max-w-md mx-auto relative z-10">
                     <div className="bg-bg-panel rounded-2xl shadow-soft p-8 max-w-md w-full relative z-10">
                         <div className="text-center mb-6">
-                            <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Ronda Terminada!</h2>
-                            <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-xl mb-4">
-                                <p className="text-xl font-semibold text-purple-700">Categoría: {roomData?.currentCategory}</p>
-                                <p className="text-2xl font-bold text-blue-600 mt-2">Palabra: {roomData?.word}</p>
+                            <h2 className="text-3xl font-bold text-white mb-4">¡Ronda Terminada!</h2>
+                            <div className="bg-bg-soft p-2 rounded-xl mb-4">
+                                <p className="text-2xl font-bold text-white mt-2">Palabra: {roomData?.word}</p>
                             </div>
-                            <div className="text-3xl font-black text-red-600 mb-4 animate-bounce">
-                                {roomData?.impostors && roomData.impostors.length > 1 ? '¡Los impostores eran:' : '¡El impostor era:'}
+                            <div className="text-3xl font-black text-red-600 mb-4">
+                                {roomData?.impostors && roomData.impostors.length > 1 ? 'LOS IMPOSTORES ERAN' : 'EL IMPOSTOR ERA'}
                             </div>
                             <div className="space-y-2">
                                 {roomData?.impostors?.map((impostor, idx) => (
-                                    <div key={idx} className="text-2xl font-bold text-red-500">
+                                    <div key={idx} className="text-2xl font-bold text-red-500 mb-4 animate-bounce">
                                         {impostor}
                                     </div>
                                 ))}
@@ -1533,7 +1531,7 @@ function App() {
                         {isHost && (
                             <button
                                 onClick={newRound}
-                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 shadow-lg active:scale-95"
+                                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold py-4 rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all transform hover:scale-110 active:scale-95 shadow-lg"
                             >
                                 Nueva Ronda
                             </button>
