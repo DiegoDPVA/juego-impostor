@@ -48,3 +48,16 @@ button,
 input {
     transition: all 0.2s ease;
 }
+
+.custom-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: bg-bg-soft;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background-color: gray;
+    border-radius: 15px;
+}

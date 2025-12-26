@@ -1294,7 +1294,7 @@ function App() {
                                 {showSettings && (
                                     <div className="mb-6 space-y-4 bg-bg-soft from-gray-50 to-purple-50 p-4 rounded-xl border-2 border-gray-900">
                                         <div>
-                                            <label className="flex items-center justify-between p-3 bg-gray-950 rounded-lg hover:shadow-md transition-all cursor-pointer">
+                                            <label className="flex items-center justify-between p-3 bg-gray-900 rounded-lg hover:shadow-md transition-all cursor-pointer">
                                                 <span className="font-medium text-white">Mostrar categoría</span>
                                                 <input
                                                     type="checkbox"
@@ -1305,7 +1305,7 @@ function App() {
                                             </label>
                                         </div>
                                         <div>
-                                            <label className="flex items-center justify-between p-3 bg-gray-950 rounded-lg hover:shadow-md transition-all cursor-pointer">
+                                            <label className="flex items-center justify-between p-3 bg-gray-900 rounded-lg hover:shadow-md transition-all cursor-pointer">
                                                 <span className="font-medium text-white">Dar pista al impostor</span>
                                                 <input
                                                     type="checkbox"
@@ -1334,7 +1334,7 @@ function App() {
                                 )}
                                 <div className="mb-6">
                                     <label className="block text-white font-semibold mb-3">Categorías seleccionadas:</label>
-                                    <div className="space-y-2 max-h-60 overflow-y-auto bg-bg-soft p-3 rounded-xl border-2 border-gray-900">
+                                    <div className="custom-scroll space-y-2 max-h-60 overflow-y-auto bg-bg-soft p-3 rounded-xl border-2 border-gray-900 ">
                                         <label className="flex items-center gap-3 p-3 hover:bg-gray-900 rounded-lg cursor-pointer transition-all hover:shadow-md">
                                             <input
                                                 type="checkbox"
